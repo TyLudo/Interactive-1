@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RM 214</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111;
+        overflow: hidden;
+      }
+
+      /* ===== Scene ===== */
+
+      .scene {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0 auto;
+        background: #ffffff;
+        display: block;
+      }
+
+      /* =====Intro===== */
+
+      #intro-screen {
+        position: fixed;
+        inset: 0;
+        background: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5000;
+        cursor: pointer;
+      }
+
+      #intro-text,
+      #video-loading-screen {
+        padding: 12px 24px;
+        font-size: 14px;
+        color: #ffffff;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+      }
+
+      #video-loading-screen {
+        opacity: 1;
+      }
+
+      /* =====BG===== */
+
+      .background {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 80%;
+        height: auto;
+        transform: translate(-50%, -50%);
+        object-fit: contain;
+      }
+
+      /* =====Overla===== */
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0);
+        pointer-events: none;
+      }
+
+      .scene.active .overlay {
+        background: rgba(0, 0, 0, 0.55);
+      }
+
+      /* =====Hotspots===== */
+
+      .hotspot {
+        position: absolute;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+      }
+
+      /* =====Album+Vinyl===== */
+
+      .focus-wrap {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: min(42vw, 520px);
+        aspect-ratio: 1 / 1;
+        transform: translate(-50%, -50%);
+        display: none;
+        z-index: 999;
+      }
+
+      .scene.active .focus-wrap {
+        display: block;
+      }
+
+      .focus-vinyl {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 92%;
+        height: 92%;
+        object-fit: contain;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+        pointer-events: none;
+        transition: transform 0.35s ease;
+      }
+
+      .focus-album {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 92%;
+        height: 92%;
+        object-fit: cover;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        transition: all 0.3s ease;
+        filter: grayscale(100%) contrast(160%);
+        cursor: pointer;
+      }
+
+      .focus-wrap:hover .focus-album {
+        transform: translate(-50%, -50%) translateX(-6vw);
+        filter: grayscale(0%);
+      }
+
+      .focus-wrap:hover .focus-vinyl {
+        transform: translate(-50%, -50%) translateX(5vw);
+      }
+
+      /* =====maps===== */
+
+      .map-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(20vw, 420px);
+        height: 100vh;
+        background: black;
+        color: white;
+        z-index: 2500;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transform: translateX(-100%);
+        transition: transform 0.45s ease;
+      }
+
+      .map-screen.open {
+        transform: translateX(0);
+      }
+
+      .map-img {
+        width: 180%;
+        align-self: center;
+        margin-bottom: 5px;
+      }
+
+      .map-description {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+
+      .map-hint {
+        font-size: 13px;
+        opacity: 0.6;
+        margin-top: 8px;
+      }
+
+      .m-key {
+        background: transparent;
+        color: rgb(0, 0, 0);
+        border: 1px solid rgb(0, 0, 0);
+        padding: 12px 24px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+      }
+
+      /* =====Buttonsstyle ===== */
+
+      .close-btn,
+      #video-start-button,
+      #return-btn {
+        background: transparent;
+        color: white;
+        border: 1px solid white;
+        padding: 12px 24px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+      }
+
+      .close-btn:hover,
+      #video-start-button:hover,
+      #return-btn:hover {
+        background: white;
+        color: black;
+      }
+
+      /* ===== Buttonposition ===== */
+
+      .close-btn {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        display: none;
+      }
+
+      .scene.active .close-btn {
+        display: block;
+      }
+
+      .m-key {
+        position: fixed;
+        left: 22px;
+        bottom: 22px;
+        z-index: 1200;
+      }
+
+      /* ===== Video Layers ===== */
+
+      #video-start-screen,
+      #video-loading-screen,
+      #video-screen,
+      #video-end-overlay {
+        position: fixed;
+        inset: 0;
+        background: black;
+        z-index: 6000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #video-loading-screen {
+        padding: 12px 24px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+      }
+
+      #game-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+
+      /* ===== Fade Black ===== */
+
+      #video-end-overlay {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1.2s ease;
+      }
+
+      #video-end-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="map-screen" id="albumWallMapScreen">
+      <img
+        class="map-img"
+        src="assets/Media/map-albumwall.png"
+        alt="album wall map"
+      />
+
+      <div class="map-description">
+        <p>
+          RM 214 is an interactive project built in a small dorm room. Each
+          record opens into a different sound-based space, turning music into a
+          way of moving through memory, mood, and private routine. Hope it
+          brings you some joy.
+        </p>
+
+        <p class="map-hint">Press M to close the map.</p>
+      </div>
+    </div>
+
+    <div class="m-key">M For Map</div>
+
+    <div id="intro-screen">
+      <div id="intro-text">
+        You just finished your classes. What a long day.
+      </div>
+    </div>
+
+    <div class="scene" id="scene">
+      <img
+        class="background"
+        src="assets/Media/未命名作品.png"
+        alt="album wall background"
+      />
+
+      <div class="overlay"></div>
+
+      <button
+        class="hotspot"
+        style="top: 3vw; left: 25%; width: 13%; height: 24%"
+        data-cover="assets/Media/Caprisongs.jpg"
+        data-video="assets/Media/CaprisongsRecording.mp4"
+        data-title="Meta Angel-FKA Twigs"
+        aria-label="Open album 1"
+      ></button>
+
+      <button
+        class="hotspot"
+        style="top: 5%; left: 44%; width: 14%; height: 24%"
+        data-cover="assets/Media/normanfr.jpg"
+        data-video="assets/Media/NFRRecording.mp4"
+        data-title="Norman Fucking Rockwell-Lana Del Rey"
+        aria-label="Open album 2"
+      ></button>
+
+      <button
+        class="hotspot"
+        style="top: 5%; left: 64%; width: 13%; height: 24%"
+        data-cover="assets/Media/21blues.jpg"
+        data-video="assets/Media/21BluesRecording.mp4"
+        data-title="Oscar Winning Tears-Raye"
+        aria-label="Open album 3"
+      ></button>
+
+      <button
+        class="hotspot"
+        style="top: 37%; left: 25%; width: 13%; height: 24%"
+        data-cover="assets/Media/isolation.jpg"
+        data-video="assets/Media/IsolationRecording.mp4"
+        data-title="Body Language-Kali Uchis"
+        aria-label="Open album 4"
+      ></button>
+
+      <button
+        class="hotspot"
+        style="top: 37%; left: 44%; width: 14%; height: 24%"
+        data-cover="assets/Media/LILYC.jpg"
+        data-video="assets/Media/LilyChouchouRecording.mp4"
+        data-title="飽和-Houwa-Lily-Chou-chou"
+        aria-label="Open album 5"
+      ></button>
+
+      <button
+        class="hotspot"
+        style="top: 37%; left: 64%; width: 13%; height: 24%"
+        data-cover="assets/Media/Daisy.jpg"
+        data-video="assets/Media/DaisyRecording.mp4"
+        data-title="SOPHIA-rusowsky"
+        aria-label="Open album 6"
+      ></button>
+
+      <div class="focus-wrap" id="focusWrap">
+        <img
+          class="focus-vinyl"
+          id="focusVinyl"
+          src="assets/Media/vinyl.png"
+          alt="vinyl record"
+        />
+
+        <img
+          class="focus-album"
+          id="focusAlbum"
+          src=""
+          alt="selected album cover"
+        />
+      </div>
+
+      <button class="close-btn" id="closeBtn">Put it back</button>
+    </div>
+
+    <div id="video-start-screen">
+      <button id="video-start-button">Enter</button>
+    </div>
+
+    <div id="video-loading-screen">Headphones on...</div>
+
+    <div id="video-screen">
+      <video id="game-video" playsinline preload="auto"></video>
+    </div>
+
+    <div id="video-end-overlay">
+      <button id="return-btn">Return</button>
+    </div>
+
+    <script>
+      const scene = document.getElementById("scene");
+      const focusAlbum = document.getElementById("focusAlbum");
+      const closeBtn = document.getElementById("closeBtn");
+      const hotspots = document.querySelectorAll(".hotspot");
+      const albumWallMapScreen = document.getElementById("albumWallMapScreen");
+
+      const introScreen = document.getElementById("intro-screen");
+      const introText = document.getElementById("intro-text");
+
+      const videoStartScreen = document.getElementById("video-start-screen");
+      const videoStartButton = document.getElementById("video-start-button");
+      const videoLoadingScreen = document.getElementById(
+        "video-loading-screen",
+      );
+      const videoScreen = document.getElementById("video-screen");
+      const gameVideo = document.getElementById("game-video");
+      const videoEndOverlay = document.getElementById("video-end-overlay");
+      const returnBtn = document.getElementById("return-btn");
+
+      let currentVideo = "";
+      let currentVideoTitle = "";
+      let introStep = 0;
+
+      function showText(text) {
+        introText.style.opacity = 0;
+
+        setTimeout(function () {
+          introText.textContent = text;
+          introText.style.opacity = 1;
+        }, 200);
+      }
+
+      if (sessionStorage.getItem("enteredAlbumWall") === "true") {
+        introScreen.style.display = "none";
+      } else {
+        showText("You just finished your classes. What a long day.");
+      }
+
+      introScreen.addEventListener("click", function () {
+        introStep++;
+
+        if (introStep === 1) {
+          showText("I think we need some music.");
+        } else if (introStep === 2) {
+          showText("Click to get the album off the wall.");
+        } else if (introStep === 3) {
+          introScreen.style.transition = "opacity 1.2s ease";
+          introScreen.style.opacity = 0;
+
+          sessionStorage.setItem("enteredAlbumWall", "true");
+
+          setTimeout(function () {
+            introScreen.style.display = "none";
+          }, 1200);
+        }
+      });
+
+      hotspots.forEach(function (hotspot) {
+        hotspot.addEventListener("click", function () {
+          const cover = hotspot.dataset.cover;
+          const video = hotspot.dataset.video || "";
+          const title = hotspot.dataset.title || "Enter";
+
+          currentVideo = video;
+          currentVideoTitle = title;
+
+          focusAlbum.src = cover;
+          scene.classList.add("active");
+        });
+      });
+
+      focusAlbum.addEventListener("click", function () {
+        if (currentVideo) {
+          sessionStorage.setItem("enteredAlbumWall", "true");
+
+          scene.classList.remove("active");
+
+          videoStartButton.disabled = false;
+          videoStartButton.textContent = currentVideoTitle;
+
+          videoEndOverlay.classList.remove("show");
+          videoEndOverlay.style.display = "none";
+
+          videoStartScreen.style.display = "flex";
+        } else {
+          console.log("No video assigned for this album.");
+        }
+      });
+
+      function requestFullScreen() {
+        if (
+          document.documentElement.requestFullscreen &&
+          !document.fullscreenElement
+        ) {
+          document.documentElement.requestFullscreen().catch(function (e) {
+            console.log("Fullscreen request was blocked:", e);
+          });
+        }
+      }
+
+      videoStartButton.addEventListener("click", function () {
+        videoStartButton.disabled = true;
+        videoStartButton.textContent = "Headphones on...";
+
+        requestFullScreen();
+
+        videoStartScreen.style.display = "none";
+        videoLoadingScreen.style.display = "flex";
+
+        gameVideo.src = currentVideo;
+        gameVideo.currentTime = 0;
+        gameVideo.load();
+
+        setTimeout(function () {
+          videoLoadingScreen.style.display = "none";
+          videoScreen.style.display = "block";
+
+          gameVideo.play().catch(function (error) {
+            console.log("Video play failed:", error);
+          });
+        }, 800);
+      });
+
+      gameVideo.addEventListener("ended", function () {
+        videoEndOverlay.style.display = "flex";
+
+        setTimeout(function () {
+          videoEndOverlay.classList.add("show");
+        }, 30);
+      });
+
+      returnBtn.addEventListener("click", function () {
+        gameVideo.pause();
+        gameVideo.removeAttribute("src");
+        gameVideo.load();
+
+        videoEndOverlay.classList.remove("show");
+        videoEndOverlay.style.display = "none";
+        videoScreen.style.display = "none";
+        videoLoadingScreen.style.display = "none";
+        videoStartScreen.style.display = "none";
+
+        focusAlbum.src = "";
+        currentVideo = "";
+        currentVideoTitle = "";
+      });
+
+      closeBtn.addEventListener("click", function () {
+        scene.classList.remove("active");
+        focusAlbum.src = "";
+        currentVideo = "";
+        currentVideoTitle = "";
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key.toLowerCase() === "m") {
+          albumWallMapScreen.classList.toggle("open");
+        }
+      });
+    </script>
+  </body>
+</html>
