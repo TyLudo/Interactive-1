@@ -159,8 +159,9 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        transform: translateX(-100%);
         transition: transform 0.45s ease;
+
+        transform: translateX(-100%);
       }
 
       .map-screen.open {
@@ -168,9 +169,11 @@
       }
 
       .map-img {
-        width: 180%;
+        width: 100%;
+        max-width: 260px;
+        height: auto;
         align-self: center;
-        margin-bottom: 5px;
+        margin-bottom: 16px;
       }
 
       .map-description {
@@ -378,7 +381,7 @@
         <img
           class="focus-vinyl"
           id="focusVinyl"
-          src="assets/Media/vinyl.png"
+          src="assets/Media/Vinyl.png"
           alt="vinyl record"
         />
 
